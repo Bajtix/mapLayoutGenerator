@@ -327,7 +327,12 @@ function mainLoop()
     {
         if(rects[i]!=undefined)
         {
-            rects[i].draw();       
+            rects[i].draw();   
+            console.log("loop");    
+        }
+        else
+        {
+            console.warn("rect undefined");
         }
     }
 
@@ -349,6 +354,70 @@ function move()
 }
 
 
+function load(contents)
+{
+    unsolved_rects = JSON.parse(contents);
+    for(i = 0; i < unsolved_rects.length; i++)
+    {
+
+            rects.push(new RoomRect(unsolved_rects[i].x,unsolved_rects[i].y,unsolved_rects[i].xd,unsolved_rects[i].yd,unsolved_rects[i].label,unsolved_rects[i].color,unsolved_rects[i].txtcolor));
+            
+    }
+}
+
+function ldo()
+{
+    document.getElementById("fileload").click();
+}
+function readSingleFile(e) 
+{
+    var file = e.target.files[0];
+    if (!file) {
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var contents = e.target.result;
+        load(contents);
+    };
+    reader.readAsText(file);
+
+    requestAnimationFrame(mainLoop);
+}
+
+function save()
+{
+    content = JSON.stringify(rects);
+
+    data = new Blob([content], {type: 'application/json'});
+
+    download(data,"map.layout")
+
+    
+
+    window.open(url, "_blank"); 
+}
+
+
+function download(blob,name) {
+    var url = URL.createObjectURL(blob),
+      div = document.createElement("div"),
+      anch = document.createElement("a");
+
+    document.body.appendChild(div);
+    div.appendChild(anch);
+
+    anch.innerHTML = "&nbsp;";
+    div.style.width = "0";
+    div.style.height = "0";
+    anch.href = url;
+    anch.download = name;
+
+    var ev = new MouseEvent("click",{});
+    anch.dispatchEvent(ev);
+    document.body.removeChild(div);
+  }
+
 
 document.addEventListener("mousedown", e => {onMouseDown(e)});
 document.addEventListener("mouseup", e => {onMouseUp(e)});
@@ -356,6 +425,6 @@ document.addEventListener("mouseout", e => {onMouseUp(e)});
 document.addEventListener("mousemove", e => {onMouseMove(e)});
 document.addEventListener('wheel', e => {onScroll(e);});
 document.addEventListener('keydown', e => {onKeydown(e);});
-
+document.getElementById("fileload").addEventListener('change',readSingleFile,false);
 
 requestAnimationFrame(mainLoop);

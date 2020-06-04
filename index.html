@@ -1,21 +1,26 @@
 <html>
     <head>
-        <link rel="stylesheet" href="index.css">
+        <title>MLGen</title>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="index.css" />
     </head>
     <body>
         <div class="content">
             <canvas id="canvas" width="1200px" height="800px"></canvas>
-            <script src="index.js"></script>
+            
             <div class="toolbar">
                 
                 <button onclick="setcolor='rgba(255,255,255,1)'; settcolor='rgba(0,0,0,1)'; changetool(0)">White</button>
                 <button onclick="setcolor='rgba(25,25,25,1)'; settcolor='rgba(255,255,255,1)'; changetool(0) ">Black</button>
-                <br>
-                <button onclick="changetool(0)">Add</button>
                 <button onclick="changetool(1)">Modify</button>
                 <button onclick="changetool(2)">Remove</button>
-                <button onclick="changetool(3)">Label</button>                
+                <button onclick="changetool(3)">Label</button>  
+                <br/>
+                <button onclick="save()">Save</button>   
+                <button onclick="ldo()">Load</button>   
+                <input type="file" id="fileload"/>            
             </div>
+            <script src="index.js"></script>
         </div>
         <div class="title">
             <h1>Map layout creator</h1>

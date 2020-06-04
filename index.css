@@ -22,6 +22,11 @@ button
     background-color: white;
 }
 
+input
+{
+    display: none;
+}
+
 .title
 {
     color: white;
