@@ -1,3 +1,10 @@
+/*
+    Code by bajtix, 
+    of course bits are taken from my other projects.
+    ...And stackoverflow.
+
+    Made in 06.2020
+*/
 
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext('2d');
@@ -19,10 +26,157 @@ var camY = 0;
 
 const handleSize = 60;
 const zoomMultiply = 0.01;
+const mapText = `
+versioninfo
+{
+	"editorversion" "400"
+	"editorbuild" "8456"
+	"mapversion" "4"
+	"formatversion" "100"
+	"prefab" "0"
+}
+visgroups
+{
+}
+viewsettings
+{
+	"bSnapToGrid" "1"
+	"bShowGrid" "1"
+	"bShowLogicalGrid" "0"
+	"nGridSpacing" "4"
+	"bShow3DGrid" "0"
+}
+world
+{
+	"id" "1"
+	"mapversion" "4"
+	"classname" "worldspawn"
+	"detailmaterial" "detail/detailsprites"
+	"detailvbsp" "detail.vbsp"
+	"maxpropscreenwidth" "-1"
+	"skyname" "sky_dust"
+	{solids}
+}
+cameras
+{
+	"activecamera" "-1"
+}
+cordons
+{
+	"active" "0"
+}
+
+`;//nice
+const solidText = `solid
+{
+    "id" "{solidId}"
+    side
+    {
+        "id" "{1FaceId}"
+        "plane" "{c0} {c1} {c2}"
+        "material" "dev/dev_measuregeneric01"
+        "uaxis" "[1 0 0 0] 0.25"
+        "vaxis" "[0 -1 0 0] 0.25"
+        "rotation" "0"
+        "lightmapscale" "16"
+        "smoothing_groups" "0"
+    }
+    side
+    {
+        "id" "{2FaceId}"
+        "plane" "{c3} {c4} {c5}"
+        "material" "dev/dev_measuregeneric01"
+        "uaxis" "[1 0 0 0] 0.25"
+        "vaxis" "[0 -1 0 0] 0.25"
+        "rotation" "0"
+        "lightmapscale" "16"
+        "smoothing_groups" "0"
+    }
+    side
+    {
+        "id" "{3FaceId}"
+        "plane" "{c0} {c6} {c3}"
+        "material" "dev/dev_measuregeneric01"
+        "uaxis" "[0 1 0 0] 0.25"
+        "vaxis" "[0 0 -1 0] 0.25"
+        "rotation" "0"
+        "lightmapscale" "16"
+        "smoothing_groups" "0"
+    }
+    side
+    {
+        "id" "{4FaceId}"
+        "plane" "{c5} {c4} {c2}"
+        "material" "dev/dev_measuregeneric01"
+        "uaxis" "[0 1 0 0] 0.25"
+        "vaxis" "[0 0 -1 0] 0.25"
+        "rotation" "0"
+        "lightmapscale" "16"
+        "smoothing_groups" "0"
+    }
+    side
+    {
+        "id" "{5FaceId}"
+        "plane" "{c1} {c0} {c7}"
+        "material" "dev/dev_measuregeneric01"
+        "uaxis" "[1 0 0 0] 0.25"
+        "vaxis" "[0 0 -1 0] 0.25"
+        "rotation" "0"
+        "lightmapscale" "16"
+        "smoothing_groups" "0"
+    }
+    side
+    {
+        "id" "{6FaceId}"
+        "plane" "{c4} {c3} {c6}"
+        "material" "dev/dev_measuregeneric01"
+        "uaxis" "[1 0 0 0] 0.25"
+        "vaxis" "[0 0 -1 0] 0.25"
+        "rotation" "0"
+        "lightmapscale" "16"
+        "smoothing_groups" "0"
+    }
+    editor
+    {
+        "color" "0 252 109"
+        "visgroupshown" "1"
+        "visgroupautoshown" "1"
+    }
+}`;
+class Point3D
+{
+    constructor(x,y,z)
+    {
+        this.x = Math.round(x);
+        this.y = Math.round(y);
+        this.z = Math.round(z);
+    }
+
+    getAsString()
+    {
+        return "(" + this.x + " " + this.y + " " + this.z + ")";
+    }
+}
+
+class Cube
+{
+    constructor(rect, height)
+    {
+        this.b1 = new Point3D(rect.x, rect.y, 0);
+        this.b2 = new Point3D(rect.xd, rect.y, 0);
+        this.b3 = new Point3D(rect.x, rect.yd, 0);
+        this.b4 = new Point3D(rect.xd, rect.yd, 0);
+
+        this.u1 = new Point3D(rect.x, rect.y, height);
+        this.u2 = new Point3D(rect.xd, rect.y, height);
+        this.u3 = new Point3D(rect.x, rect.yd, height);
+        this.u4 = new Point3D(rect.xd, rect.yd, height);
+    }
+}
 
 class RoomRect
 {
-    constructor(x,y,xd,yd,label,color,txtcolor)
+    constructor(x,y,xd,yd,label,color,txtcolor,rotation)
     {
         this.x = x;
         this.y = y;
@@ -32,17 +186,24 @@ class RoomRect
         this.label = label;
         this.color = color;
         this.txtcolor = txtcolor;
+        this.rotation = rotation;
     }
 
 
 
     draw() 
     {
+        ctx.save();
+        ctx.translate(((this.x+this.xd)/2 +camX)*scrollPos,((this.y+this.yd)/2 +camY)*scrollPos);
+        ctx.rotate(this.rotation * Math.PI / 180);
         ctx.fillStyle = this.color;
         ctx.textAlign = "center";
-        ctx.fillRect((this.x + camX)*scrollPos,(this.y+ camY)*scrollPos,(this.xd-this.x)*scrollPos,(this.yd-this.y)*scrollPos);
+        //ctx.fillRect((this.x + camX)*scrollPos,(this.y+ camY)*scrollPos,(this.xd-this.x)*scrollPos,(this.yd-this.y)*scrollPos);
+        ctx.fillRect(-((this.xd-this.x)/2)*scrollPos,-((this.yd-this.y)/2)*scrollPos,(this.xd-this.x)*scrollPos,(this.yd-this.y)*scrollPos);
         ctx.fillStyle = this.txtcolor;
-        ctx.fillText(this.label, ((this.x + this.xd)/2 + camX)*scrollPos, ((this.y + this.yd)/2 + camY) *scrollPos); 
+        //ctx.fillText(this.label, ((this.x + this.xd)/2 + camX)*scrollPos, ((this.y + this.yd)/2 + camY) *scrollPos); 
+        ctx.fillText(this.label, 0, 0); 
+        ctx.restore();
     }
 
     checkForCursor(mx,my)
@@ -83,6 +244,22 @@ function changetool(i)
     tool=i;
 }
 
+
+function getRectangleAtMouse()
+{
+    for(i = 0; i < rects.length; i++)
+    {
+        if(rects[i] != undefined){
+            if(rects[i].checkForCursor(mouseX,mouseY))
+            {
+                return i;
+            }
+        }
+    }
+    return undefined;
+}
+
+
 function onMouseDown(e)
 {
     if(mouseX > canvas.getBoundingClientRect().right)
@@ -93,27 +270,15 @@ function onMouseDown(e)
     mouseDown = true;
     
     if(tool == 0)
-    {        
-        //ctx.fillStyle = 'rgba(255,255,255,1)';
-        rects.push(new RoomRect((mouseX/scrollPos-camX),(mouseY/scrollPos-camY),mouseX+10-camX,mouseY+10-camY,"",setcolor,settcolor));
+    {
+        rects.push(new RoomRect((mouseX/scrollPos-camX),(mouseY/scrollPos-camY),mouseX+10-camX,mouseY+10-camY,"",setcolor,settcolor,0));
         controlledRect = rects.length-1;
-        //rects[controlledRect].label = "Room " + controlledRect;
     }
 
     if(tool==1)
     {
         if(controlledRect == undefined){
-            for(i = 0; i < rects.length; i++)
-            {
-                if(rects[i] != undefined){
-                    if(rects[i].checkForCursor(mouseX,mouseY))
-                    {
-                        controlledRect = i;
-
-                        console.log("selected rect")
-                    }
-                }
-            }
+            controlledRect = getRectangleAtMouse();
         }
         else 
             console.log("undefined");
@@ -121,20 +286,12 @@ function onMouseDown(e)
 
     if(tool==2)
     {
-        if(controlledRect == undefined){
-            for(i = 0; i < rects.length; i++)
-            {
-                if(rects[i] != undefined)
-                {
-                    if(rects[i].checkForCursor(mouseX,mouseY))
-                    {
-                        if(confirm("Are you sure you want to delete: " + rects[i].label))
-                        {
-                            rects.splice(i,1);
-                        }
-                    }
-                }
-            }
+        if(controlledRect == undefined)
+        {               
+            i = getRectangleAtMouse();    
+            if(i!=undefined)    
+                if(confirm("Are you sure you want do delete " + rects[i].label))
+                    rects.splice(i,1);
         }
         else 
             console.log("undefined");
@@ -143,15 +300,10 @@ function onMouseDown(e)
     if(tool == 3)
     {
         if(controlledRect == undefined){
-            for(i = 0; i < rects.length; i++)
+            i = getRectangleAtMouse()
+            if(i != undefined)
             {
-                if(rects[i] != undefined)
-                {
-                    if(rects[i].checkForCursor(mouseX,mouseY))
-                    {
-                        rects[i].label = prompt("Change name of " + rects[i].label + ":",rects[i].label);
-                    }
-                }
+                rects[i].label = prompt("Change name of " + rects[i].label + ":",rects[i].label);
             }
         }
         else 
@@ -198,9 +350,6 @@ function onMouseUp(e)
         }
         controlledRect = undefined;
     }
-
-    
-
 }
 function onMouseMove(e)
 {
@@ -268,7 +417,7 @@ function onMouseMove(e)
                     if(mouseDown)
                     {
                         rects[controlledRect].xd = (mouseX/scrollPos-handleSize/2 - camX);
-                        rects[controlledRect].yd = (mouseY/scrollPos-handleSize/2 - camY);
+                        rects[controlledRect].yd = (mouseY/scrollPos-handleSize/2 - camY); //hehe fajna linijka
                     }
                 } 
             }
@@ -315,13 +464,8 @@ function onKeydown(evnet)
 function mainLoop()
 {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    
-
-    if(mouseDown == true)
-    {
-        // cursor ctx.fillRect(mouseX-5,mouseY-5,10,10);
-    }
+    //ctx.fillStyle = 'rgba(0,128,255,1)' this draws a rect at 0 0
+    //ctx.fillRect(-20 +camX,-20 +camY,40,40);
 
     for(i = 0; i < rects.length; i++)
     {
@@ -359,9 +503,7 @@ function load(contents)
     unsolved_rects = JSON.parse(contents);
     for(i = 0; i < unsolved_rects.length; i++)
     {
-
-            rects.push(new RoomRect(unsolved_rects[i].x,unsolved_rects[i].y,unsolved_rects[i].xd,unsolved_rects[i].yd,unsolved_rects[i].label,unsolved_rects[i].color,unsolved_rects[i].txtcolor));
-            
+        rects.push(new RoomRect(unsolved_rects[i].x,unsolved_rects[i].y,unsolved_rects[i].xd,unsolved_rects[i].yd,unsolved_rects[i].label,unsolved_rects[i].color,unsolved_rects[i].txtcolor));   
     }
 }
 
@@ -388,18 +530,13 @@ function readSingleFile(e)
 function save()
 {
     content = JSON.stringify(rects);
-
     data = new Blob([content], {type: 'application/json'});
-
-    download(data,"map.layout")
-
-    
-
-    window.open(url, "_blank"); 
+    download(data,"map.layout");
 }
 
 
-function download(blob,name) {
+function download(blob,name) 
+{
     var url = URL.createObjectURL(blob),
       div = document.createElement("div"),
       anch = document.createElement("a");
@@ -416,8 +553,54 @@ function download(blob,name) {
     var ev = new MouseEvent("click",{});
     anch.dispatchEvent(ev);
     document.body.removeChild(div);
-  }
+}
 
+function exportmap()
+{
+    console.log("Exporting the map!");
+    console.log("Step 1: define cubes");
+    cubes = [];
+
+    for(i = 0; i < rects.length; i++)
+    {
+        cubes.push(new Cube(rects[i],128));
+    }
+
+    console.log("Cubes were generated.");
+
+    alltxt = "";
+    
+    for(solidIds = 0; solidIds < cubes.length; solidIds++)
+    {
+        //replace ids;
+        side = solidText
+        .replace("{solidId}",solidIds)
+        .replace("{1FaceId}",solidIds*6 + 0)
+        .replace("{2FaceId}",solidIds*6 + 1)
+        .replace("{3FaceId}",solidIds*6 + 2)
+        .replace("{4FaceId}",solidIds*6 + 3)
+        .replace("{5FaceId}",solidIds*6 + 4)
+        .replace("{6FaceId}",solidIds*6 + 5);
+
+        
+        //set faces
+        side = side
+        .replace(/{c0}/g, cubes[solidIds].u3.getAsString())
+        .replace(/{c1}/g, cubes[solidIds].u4.getAsString())
+        .replace(/{c2}/g, cubes[solidIds].u2.getAsString())
+        .replace(/{c3}/g, cubes[solidIds].b1.getAsString())
+        .replace(/{c4}/g, cubes[solidIds].b2.getAsString())
+        .replace(/{c5}/g, cubes[solidIds].b4.getAsString())
+        .replace(/{c6}/g, cubes[solidIds].u1.getAsString())
+        .replace(/{c7}/g, cubes[solidIds].b3.getAsString());
+
+        alltxt = alltxt + "\n" + side;
+    }
+    mapFile = mapText.replace("{solids}",alltxt)
+    console.log(mapFile);
+    data = new Blob([mapFile], {type: 'application/json'});
+    download(data,"map.vmf")
+}
 
 document.addEventListener("mousedown", e => {onMouseDown(e)});
 document.addEventListener("mouseup", e => {onMouseUp(e)});
